@@ -434,7 +434,10 @@ NSString * const kSQlBlob    = @"BLOB";
             
             value = [[NSDateFormatter ymdhmsDashFormatter] stringFromDate:value];
         }
-        
+        if (!value) {
+            
+            value = @"";
+        }
         [infoDict setObject:value forKey:propName];
     }
     
