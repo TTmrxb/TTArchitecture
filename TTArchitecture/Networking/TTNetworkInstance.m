@@ -59,55 +59,55 @@ static double const kRequestTimeout = 20.0;
 
 + (void)startNetworkStatusMonitor {
     
-    [[AFNetworkReachabilityManager manager] startMonitoring];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(networkStatusChanged)
+                                                 name:kReachabilityChangedNotification
+                                               object:nil];
+    [[Reachability reachabilityForInternetConnection] startNotifier];
+}
+
++ (void)networkStatusChanged {
     
-    [[AFNetworkReachabilityManager manager] setReachabilityStatusChangeBlock:
-     ^(AFNetworkReachabilityStatus status) {
-         
-         switch (status) {
-                 
-                 case AFNetworkReachabilityStatusUnknown:
-                 case AFNetworkReachabilityStatusNotReachable: {
-                     
-                     dispatch_async(dispatch_get_main_queue(), ^{
-                         
-                         [self showFailReachNetworkTips];
-                     });
-                 }
-                 
-                 break;
-                 
-                 case AFNetworkReachabilityStatusReachableViaWWAN: {
-                     
-                 }
-                 
-                 break;
-                 
-                 case AFNetworkReachabilityStatusReachableViaWiFi: {
-                     
-                 }
-                 
-                 break;
-                 
-             default:
-                 break;
-         }
-     }];
+    NetworkStatus netStatus = [[Reachability reachabilityForInternetConnection] currentReachabilityStatus];
+    
+    switch (netStatus) {
+            
+        case ReachableViaWWAN:{
+            
+            [MBProgressHUD showMessage:@"当前使用2G//3G//4G...网络" inView:TT_ROOT_WINDOW];
+        }
+            break;
+            
+        case ReachableViaWiFi:{
+            
+            [MBProgressHUD showMessage:@"当前使用WiFi网络" inView:TT_ROOT_WINDOW];
+        }
+            break;
+            
+        case NotReachable:{
+            
+            [MBProgressHUD showMessage:@"当前无网络连接" inView:TT_ROOT_WINDOW];
+        }
+            break;
+            
+        default:
+            break;
+    }
 }
 
 + (BOOL)isNetReachable {
     
-    return [Reachability reachabilityForInternetConnection].currentReachabilityStatus != NotReachable;
+    return [[Reachability reachabilityForInternetConnection] isReachable];
 }
 
 + (BOOL)isWWANNetwork {
     
-    return [AFNetworkReachabilityManager manager].reachableViaWWAN;
+    return [[Reachability reachabilityForInternetConnection] isReachableViaWWAN];
 }
 
 + (BOOL)isWiFiNetwork {
     
-    return [AFNetworkReachabilityManager manager].reachableViaWiFi;
+    return [[Reachability reachabilityForInternetConnection] isReachableViaWiFi];
 }
 
 + (void)showFailReachNetworkTips {
