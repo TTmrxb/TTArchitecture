@@ -268,10 +268,10 @@ NSString * const kSQlBlob    = @"BLOB";
     
     FMResultSet *set = [self.dataBase executeQuery:sql];
     
-    NSMutableDictionary *resultDict = [NSMutableDictionary dictionary];
     while ([set next]) {
         
-        [resultDict removeAllObjects];
+        NSMutableDictionary *resultDict = [NSMutableDictionary dictionary];
+        
         for (NSString *fieldName in dict.allKeys) {
             
             NSString *sqlType = dict[fieldName];
