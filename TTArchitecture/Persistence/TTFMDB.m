@@ -222,13 +222,10 @@ NSString * const kSQlBlob    = @"BLOB";
     NSMutableString *sql = [NSMutableString stringWithFormat:@"UPDATE %@ SET ", tableName];
     
     NSMutableArray *valueArr = [NSMutableArray array];
-    if (!condition || [condition isEqualToString:@""]) {
+    for (NSString *fieldName in dict.allKeys) {
         
-        for (NSString *fieldName in dict.allKeys) {
-            
-            [sql appendFormat:@"%@ = ?, ", fieldName];
-            [valueArr addObject:dict[fieldName]];
-        }
+        [sql appendFormat:@"%@ = ?, ", fieldName];
+        [valueArr addObject:dict[fieldName]];
     }
     
     if (sql.length > 0) {
