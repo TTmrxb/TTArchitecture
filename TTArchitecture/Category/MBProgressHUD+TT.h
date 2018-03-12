@@ -17,6 +17,6 @@
 /**
  hud 3秒后消失，执行动作
  */
-+ (void)showMessage:(NSString *)message toView:(UIView *)view completionBlock:(void(^)())completion;
++ (void)showMessage:(NSString *)message toView:(UIView *)view completionBlock:(void(^)(void))completion;
 
 @end

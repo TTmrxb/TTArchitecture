@@ -23,6 +23,13 @@ typedef NS_ENUM(NSUInteger, TTNetworkStatus) {
 
 static double const kRequestTimeout = 20.0;
 
+@interface TTNetworkInstance ()
+
+@property (nonatomic, strong) AFHTTPSessionManager *httpSessionMgr;
+@property (nonatomic, strong) AFURLSessionManager *urlSessionMgr;
+
+@end
+
 @implementation TTNetworkInstance
 
 + (instancetype)sharedInstance {
@@ -31,24 +38,30 @@ static double const kRequestTimeout = 20.0;
     static dispatch_once_t onceToken;
     
     dispatch_once(&onceToken, ^{
-        
         networkInstance = [[self alloc] init];
+        networkInstance.httpSessionMgr = [self AFHttpSessionManager];
+        networkInstance.urlSessionMgr = [self AFUrlSessionManager];
     });
     
     return networkInstance;
 }
 
-+ (AFHTTPSessionManager *)AFSessionManager {
++ (AFHTTPSessionManager *)AFHttpSessionManager {
     
     AFHTTPSessionManager *sessionMgr = [AFHTTPSessionManager manager];
     sessionMgr.requestSerializer = [AFJSONRequestSerializer serializer];//请求
     sessionMgr.responseSerializer = [AFHTTPResponseSerializer serializer];//响应
     sessionMgr.responseSerializer.acceptableContentTypes =
-    [NSSet setWithObjects:@"application/json", @"text/json", @"text/javascript",
-     @"text/html", @"text/plain", nil];
+    [NSSet setWithObjects:@"application/json", @"text/json", @"text/javascript", @"text/html", @"text/plain", nil];
     sessionMgr.requestSerializer.timeoutInterval = kRequestTimeout;
     
     return sessionMgr;
+}
+
++ (AFURLSessionManager *)AFUrlSessionManager {
+    
+    return [[AFURLSessionManager alloc] initWithSessionConfiguration:[NSURLSessionConfiguration
+                                                                      defaultSessionConfiguration]];
 }
 
 + (void)cancelAllOperations {
@@ -122,12 +135,11 @@ static double const kRequestTimeout = 20.0;
     
     NSAssert(url != nil, @"url不能为空");
     
-    AFHTTPSessionManager *sessionMgr = [TTNetworkInstance AFSessionManager];
-    
-    [sessionMgr GET:url
-         parameters:parameters
-           progress:nil
-            success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject)
+    self.httpSessionMgr.requestSerializer.timeoutInterval = kRequestTimeout;
+    [self.httpSessionMgr GET:url
+                  parameters:parameters
+                    progress:nil
+                     success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject)
      {
          
          NSDictionary *result
@@ -151,13 +163,12 @@ static double const kRequestTimeout = 20.0;
     
     MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:TT_ROOT_WINDOW animated:YES];
     hud.removeFromSuperViewOnHide = YES;
-    
-    AFHTTPSessionManager *sessionMgr = [TTNetworkInstance AFSessionManager];
 
-    [sessionMgr GET:url
-         parameters:parameters
-           progress:nil
-            success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject)
+    self.httpSessionMgr.requestSerializer.timeoutInterval = kRequestTimeout;
+    [self.httpSessionMgr GET:url
+                 parameters:parameters
+                   progress:nil
+                    success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject)
      {
          [hud hideAnimated:YES];
          
@@ -179,12 +190,12 @@ static double const kRequestTimeout = 20.0;
      Failure:(void (^)(NSError *error))failure {
     
     NSAssert(url != nil, @"url不能为空");
-    AFHTTPSessionManager *sessionMgr = [TTNetworkInstance AFSessionManager];
     
-    [sessionMgr POST:url
-          parameters:parameters
-            progress:nil
-             success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject)
+    self.httpSessionMgr.requestSerializer.timeoutInterval = kRequestTimeout;
+    [self.httpSessionMgr POST:url
+                   parameters:parameters
+                     progress:nil
+                      success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject)
      {
          NSDictionary *result
          = [NSJSONSerialization JSONObjectWithData:responseObject
@@ -209,12 +220,11 @@ static double const kRequestTimeout = 20.0;
     MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:TT_ROOT_WINDOW animated:YES];
     hud.removeFromSuperViewOnHide = YES;
     
-    AFHTTPSessionManager *sessionMgr = [TTNetworkInstance AFSessionManager];
-    
-    [sessionMgr POST:url
-          parameters:parameters
-            progress:nil
-             success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject)
+    self.httpSessionMgr.requestSerializer.timeoutInterval = kRequestTimeout;
+    [self.httpSessionMgr POST:url
+                   parameters:parameters
+                     progress:nil
+                      success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject)
      {
          [hud hideAnimated:YES];
          
@@ -240,8 +250,6 @@ static double const kRequestTimeout = 20.0;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:body options:0 error:&error];
     NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
     
-    AFURLSessionManager *manager = [[AFURLSessionManager alloc] initWithSessionConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
-    
     NSMutableURLRequest *request = [[AFJSONRequestSerializer serializer] requestWithMethod:@"POST"
                                                                                  URLString:url
                                                                                 parameters:nil
@@ -252,7 +260,7 @@ static double const kRequestTimeout = 20.0;
     [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
     [request setHTTPBody:[jsonString dataUsingEncoding:NSUTF8StringEncoding]];
     
-    [[manager dataTaskWithRequest:request completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+    [[self.urlSessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         
         if (!error) {
             
@@ -276,8 +284,6 @@ static double const kRequestTimeout = 20.0;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:body options:0 error:&error];
     NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
     
-    AFURLSessionManager *manager = [[AFURLSessionManager alloc] initWithSessionConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
-    
     NSMutableURLRequest *request = [[AFJSONRequestSerializer serializer] requestWithMethod:@"POST"
                                                                                  URLString:url
                                                                                 parameters:nil
@@ -288,7 +294,7 @@ static double const kRequestTimeout = 20.0;
     [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
     [request setHTTPBody:[jsonString dataUsingEncoding:NSUTF8StringEncoding]];
     
-    [[manager dataTaskWithRequest:request completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+    [[self.urlSessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         
         [hud hideAnimated:YES];
         
@@ -309,14 +315,13 @@ static double const kRequestTimeout = 20.0;
     
     MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:TT_ROOT_WINDOW animated:YES];
     hud.removeFromSuperViewOnHide = YES;
-    
-    AFHTTPSessionManager *sessionMgr = [TTNetworkInstance AFSessionManager];
-    sessionMgr.requestSerializer.timeoutInterval = 60.0;
+
+    self.httpSessionMgr.requestSerializer.timeoutInterval = 60.0;
     
     NSURL *url = [NSURL URLWithString:downloadUrl];
     NSURLRequest *request = [NSURLRequest requestWithURL:url];
     NSURLSessionDownloadTask *task
-    = [sessionMgr downloadTaskWithRequest:request progress:^(NSProgress * _Nonnull downloadProgress) {
+    = [self.httpSessionMgr downloadTaskWithRequest:request progress:^(NSProgress * _Nonnull downloadProgress) {
         
         DLog(@"当前下载进度为:%lf",
              1.0 * downloadProgress.completedUnitCount / downloadProgress.totalUnitCount);
@@ -343,12 +348,11 @@ static double const kRequestTimeout = 20.0;
                     Success:(void (^)(id responseObj))success
                     Failure:(void (^)(NSError *error))failure {
     
-    AFURLSessionManager *manager = [TTNetworkInstance AFSessionManager];
-    
     NSURL *URL = [NSURL URLWithString:downloadUrl];
     NSURLRequest *request = [NSURLRequest requestWithURL:URL];
     
-    NSURLSessionDataTask *dataTask = [manager dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+    self.httpSessionMgr.requestSerializer.timeoutInterval = kRequestTimeout;
+    NSURLSessionDataTask *dataTask = [self.httpSessionMgr dataTaskWithRequest:request completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
         
         if (error) {
             

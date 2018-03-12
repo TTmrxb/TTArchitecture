@@ -28,7 +28,7 @@ static CGFloat kSleepTime = 3.0;
     [hud hideAnimated:YES afterDelay:duration];
 }
 
-+ (void)showMessage:(NSString *)message toView:(UIView *)view completionBlock:(void(^)())completion {
++ (void)showMessage:(NSString *)message toView:(UIView *)view completionBlock:(void(^)(void))completion {
     
     MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:view animated:YES];
     hud.removeFromSuperViewOnHide = YES;
